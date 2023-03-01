@@ -1,0 +1,16 @@
+{
+  "name": "@ysx/workspace",
+  "version": "1.0.0",
+  "description": "ysx workspace",
+  "main": "index.js",
+  "scripts": {},
+  "keywords": [
+    "pnpm",
+    "library"
+  ],
+  "author": "ysx",
+  "license": "ISC",
+  "devDependencies": {
+    "@tsconfig/node-lts-strictest-esm": "^18.12.1",
+  }
+}

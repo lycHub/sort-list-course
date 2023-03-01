@@ -1,0 +1,13 @@
+{
+  "name": "@ysx/sortable",
+  "version": "1.0.0",
+  "description": "sortable core",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {},
+  "keywords": [
+    "sortable"
+  ],
+  "author": "ysx",
+  "license": "ISC"
+}

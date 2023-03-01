@@ -1,0 +1,10 @@
+{
+  "extends": "@tsconfig/node-lts-strictest-esm/tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "declaration": true,
+    "declarationDir": "dist/typings",
+    "lib": ["DOM", "ESNext"]
+  },
+  "include": ["src/**/*.ts"]
+}
