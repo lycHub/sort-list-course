@@ -11,6 +11,6 @@
   "author": "ysx",
   "license": "ISC",
   "devDependencies": {
-    "@tsconfig/node-lts-strictest-esm": "^18.12.1",
+    "@tsconfig/node-lts-strictest-esm": "^18.12.1"
   }
 }
