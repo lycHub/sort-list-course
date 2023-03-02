@@ -4,7 +4,9 @@
   "description": "sortable core",
   "type": "module",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "build": "rollup -c rollup.config.js"
+  },
   "keywords": [
     "sortable"
   ],

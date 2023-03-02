@@ -11,6 +11,10 @@
   "author": "ysx",
   "license": "ISC",
   "devDependencies": {
-    "@tsconfig/node-lts-strictest-esm": "^18.12.1"
+    "@rollup/plugin-typescript": "^11.0.0",
+    "@tsconfig/node-lts-strictest-esm": "^18.12.1",
+    "rollup": "^3.18.0",
+    "tslib": "^2.5.0",
+    "typescript": "^4.9.5"
   }
 }
