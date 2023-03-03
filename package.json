@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "description": "ysx workspace",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "dev:sortable": "pnpm -C=packages/sortable run dev",
+    "dev:playground": "pnpm -C=packages/playground run dev"
+  },
   "keywords": [
     "pnpm",
     "library"
