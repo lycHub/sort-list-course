@@ -62,13 +62,13 @@ class Sortable {
             }
 
 
-           /* if (SupportDraggable) {
+            if (SupportDraggable) {
                 target.setAttribute('draggable', 'true');
                 this.container!.addEventListener('dragenter', this.#handleMove);
                 this.container!.addEventListener('dragover', this.#handleMove);
                 this.container!.addEventListener('drop', this.#handleUp);
                 target.addEventListener('dragend', this.#handleUp);
-            }*/
+            }
 
             if (this.options.supportPointer) {
                 document.addEventListener('pointermove', this.#handleMove);
@@ -78,8 +78,6 @@ class Sortable {
                 document.addEventListener('mouseup', this.#handleUp);
             }
             this.#dragEl = target;
-
-            this.#setPreview();
         }
     }
 
@@ -115,6 +113,11 @@ class Sortable {
         event.preventDefault();
         event.stopPropagation();
 
+        if (!this.#previewEl) {
+            this.#setPreview();
+            this.#dragEl!.style.visibility = 'hidden';
+        }
+
 
         const target = closest(event.target as HTMLElement, this.options.dragSelector);
 
@@ -136,7 +139,7 @@ class Sortable {
             y: +startTop + delta.y,
         });
 
-        this.#dragEl!.style.visibility = 'hidden';
+
 
         if (target) {
             if (this.#dragEl!.contains(target)) {
@@ -144,9 +147,10 @@ class Sortable {
             }
 
 
-            const [_, vertical] = dragDirection(this.#lastPosition, currentPosition);
+            const [_, vertical] = dragDirection(this.#lastPosition!, currentPosition);
 
-            if (SupportDraggable) {
+
+            if (!SupportDraggable) {
                 this.#fixScroll(target || this.#dragEl);
             }
 
@@ -193,28 +197,24 @@ class Sortable {
     }
 
     #handleUp = () => {
-        console.log('handleUp');
         this.#offEvents();
 
         const currentDragRect = getRect(this.#dragEl!);
-        const startLeft = this.#previewEl!.getAttribute('start-left') || '';
-        const startTop = this.#previewEl!.getAttribute('start-top') || '';
-        if (+startLeft === currentDragRect.x && +startTop === currentDragRect.y) {
-            this.#clear();
-        } else {
-            this.#previewEl!.style.transition = SortablePreset.transition;
+        // const startLeft = this.#previewEl!.getAttribute('start-left') || '';
+        // const startTop = this.#previewEl!.getAttribute('start-top') || '';
+        if (this.#previewEl) {
+            this.#previewEl.style.transition = SortablePreset.transition;
             this.#setPreviewPosition({
                 x: currentDragRect.x,
                 y: currentDragRect.y,
             });
 
             const handleTransitionEnd = () => {
-                console.log('handleTransitionEnd run');
                 this.#previewEl!.removeEventListener('transitionend', handleTransitionEnd);
                 this.#clear();
             }
 
-            this.#previewEl!.addEventListener('transitionend', handleTransitionEnd);
+            this.#previewEl.addEventListener('transitionend', handleTransitionEnd);
         }
     }
 
