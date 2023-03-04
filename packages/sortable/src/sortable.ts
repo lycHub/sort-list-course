@@ -1,5 +1,6 @@
-import type {PointMeta, SortableEvent, SortableOptions, TypeWithNull} from "./typings";
-import {beyondBoundary, closest, Direction, dragDirection, getRect, index} from "./utils";
+import type {PointMeta, SortableEvent, SortableOptions, SortableTarget, TypeWithNull} from "./typings";
+import {beyondBoundary, closest, Direction, dragDirection, getRect} from "./utils";
+import {AnimationManager} from "./aniamte";
 
 const SortablePreset = {
     containerCls: 'sortable-container',
@@ -26,12 +27,18 @@ class Sortable {
     #startMeta: TypeWithNull<PointMeta & { dragEl: DOMRect; }> = null;
     #lastPosition: TypeWithNull<PointMeta> = null;
 
+    #animationManager: TypeWithNull<AnimationManager> = null;
+
     constructor(options: SortableOptions) {
         this.container = typeof options.container === 'string' ? document.querySelector(options.container) : options.container;
         if (this.container) {
+            // todo: this.container.id
             this.container.classList.add(SortablePreset.containerCls);
             this.#mergeOptions(options);
             this.#initEvents();
+            if (this.options.animation) {
+                this.#animationManager = new AnimationManager(this.container, this.options);
+            }
         }
     }
 
@@ -121,7 +128,7 @@ class Sortable {
         }
 
 
-        const target = closest(event.target as HTMLElement, this.options.dragSelector);
+        const target = closest(event.target as HTMLElement, this.options.dragSelector) as SortableTarget;
 
         const currentPosition = {
             x: event.clientX,
@@ -144,7 +151,7 @@ class Sortable {
 
 
         if (target) {
-            if (this.#dragEl!.contains(target)) {
+            if (this.#dragEl!.contains(target) || target.sortableAnimation?.playState === 'running') {
                 return;
             }
 
@@ -156,12 +163,15 @@ class Sortable {
                 this.#fixScroll(target || this.#dragEl);
             }
 
+            this.#animationManager?.captureAnimationState();
+
             const nextSibling = target.nextElementSibling;
             if (nextSibling) {
                 this.container!.insertBefore(this.#dragEl!, vertical === Direction.Down ? nextSibling : target);
             } else {
                 this.container!.appendChild(this.#dragEl!);
             }
+            this.#animationManager?.animateAll();
         }
 
         this.#lastPosition = {

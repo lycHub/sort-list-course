@@ -1,5 +1,6 @@
 type TypeWithNull<T> = T | null;
 type SortableEvent = MouseEvent | PointerEvent | DragEvent;
+type SortableTarget = HTMLElement & { sortableAnimation?: Animation; }
 
 interface SortableOptions {
     container: string | HTMLElement;
@@ -14,7 +15,7 @@ interface PointMeta {
 }
 
 interface AnimationState {
-    target: HTMLElement;
+    target: SortableTarget;
     fromRect: DOMRect;
 }
 
@@ -24,4 +25,5 @@ export {
     SortableOptions,
     AnimationState,
     SortableEvent,
+    SortableTarget
 }

@@ -69,7 +69,12 @@ function index(el: HTMLElement, selector?: string) {
     return index;
 }
 
-
+function isRectEqual(rect1: DOMRect, rect2: DOMRect) {
+    return Math.round(rect1.top) === Math.round(rect2.top) &&
+        Math.round(rect1.left) === Math.round(rect2.left) &&
+        Math.round(rect1.height) === Math.round(rect2.height) &&
+        Math.round(rect1.width) === Math.round(rect2.width);
+}
 
 export {
     Direction,
@@ -77,5 +82,6 @@ export {
     closest,
     getRect,
     beyondBoundary,
-    index
+    index,
+    isRectEqual
 }
