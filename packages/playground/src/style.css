@@ -1,0 +1,53 @@
+* {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+#app h2 {
+    text-align: center;
+}
+
+#app .drag-list {
+    width: 500px;
+    margin: 30px auto;
+    font-size: 16px;
+    user-select: none;
+    cursor: move;
+    border: 1px solid;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#app .drag-list .drag-item {
+    padding: 10px 12px;
+    border-bottom: 1px solid;
+
+}
+
+#app .drag-list .drag-item:last-child {
+    border-bottom: none;
+}
+
+#app .drag-list .drag-item .title {
+    background-color: aqua;
+}
+
+
+#app .drag-list-hor {
+    display: flex;
+    width: 480px;
+    overflow-x: auto;
+    white-space: nowrap;
+    margin: 30px auto;
+}
+
+#app .drag-list-hor .drag-item {
+    display: inline-block;
+    min-width: 70px;
+    height: 30px;
+    line-height: 30px;
+    padding: 10px;
+    border: 1px solid;
+
+}
