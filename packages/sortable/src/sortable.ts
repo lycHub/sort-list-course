@@ -1,8 +1,18 @@
 import type {PointMeta, SortableEvent, SortableOptions, TypeWithNull} from "./typings";
-import {Direction, dragDirection} from "./utils";
+import {beyondBoundary, closest, Direction, dragDirection, getRect} from "./utils";
 
 const SortablePreset = {
-    containerCls: 'sortable-container'
+    containerCls: 'sortable-container',
+    previewCls: 'sortable-preview',
+    previewStyles: `
+          position: fixed;
+          left: 0;
+          top: 0;
+          box-shadow: 4px 4px 8px 0px rgba(97,133,123,1);
+          pointer-events: none;
+    `,
+    transition: 'transform .2s ease-in-out',
+    fixScrollRatio: 1.1
 }
 
 const SupportDraggable = document && 'draggable' in document.createElement('div');
@@ -11,9 +21,10 @@ class Sortable {
     readonly container: TypeWithNull<HTMLElement> = null;
     options!: Required<SortableOptions>;
 
-    #dragEl: HTMLElement;
-    #startMeta: PointMeta;
-    #lastPosition: PointMeta;
+    #previewEl: TypeWithNull<HTMLElement> = null;
+    #dragEl: TypeWithNull<HTMLElement> = null;
+    #startMeta: TypeWithNull<PointMeta & { dragEl: DOMRect; }> = null;
+    #lastPosition: TypeWithNull<PointMeta> = null;
 
     constructor(options: SortableOptions) {
         this.container = typeof options.container === 'string' ? document.querySelector(options.container) : options.container;
@@ -40,51 +51,104 @@ class Sortable {
     }
 
     #handleStart = (event: SortableEvent) => {
-        const target = event.target as HTMLElement;
-        if (target?.matches(this.options.dragSelector)) {
+        // const target = event.target as HTMLElement;
+        const target = closest(event.target as HTMLElement, this.options.dragSelector);
+        // console.log('target', target, event.target);
+        if (target) {
             this.#startMeta = {
                 x: event.clientX,
-                y: event.clientY
+                y: event.clientY,
+                dragEl: getRect(target)
             }
 
 
-            if (SupportDraggable) {
+           /* if (SupportDraggable) {
                 target.setAttribute('draggable', 'true');
                 this.container!.addEventListener('dragenter', this.#handleMove);
                 this.container!.addEventListener('dragover', this.#handleMove);
                 this.container!.addEventListener('drop', this.#handleUp);
                 target.addEventListener('dragend', this.#handleUp);
-            }
+            }*/
 
-            /*if (this.options.supportPointer) {
+            if (this.options.supportPointer) {
                 document.addEventListener('pointermove', this.#handleMove);
                 document.addEventListener('pointerup', this.#handleUp);
             } else {
                 document.addEventListener('mousemove', this.#handleMove);
                 document.addEventListener('mouseup', this.#handleUp);
-            }*/
+            }
             this.#dragEl = target;
+
+            this.#setPreview();
         }
     }
 
-    #handleMove = (event: SortableEvent) => {
+    #setPreview() {
+        this.#previewEl = this.#dragEl!.cloneNode(true) as HTMLElement;
+        this.#previewEl.className = SortablePreset.previewCls;
+        const styles = getComputedStyle(this.#dragEl!);
+        this.#previewEl.style.cssText = `
+            width: ${styles.width};
+            height: ${styles.height};
+            line-height: ${styles.lineHeight};
+            padding: ${styles.padding};
+            ${SortablePreset.previewStyles}
+        `;
 
+        const { x, y, dragEl } = this.#startMeta!;
+        const left = x - (x - dragEl.x);
+        const top = y - (y - dragEl.y);
+        this.#previewEl!.setAttribute('start-left', `${left}`);
+        this.#previewEl!.setAttribute('start-top', `${top}`);
+        this.#setPreviewPosition({ x: left, y: top });
+        document.body.appendChild(this.#previewEl);
+    }
+
+    #setPreviewPosition(position: PointMeta) {
+        this.#previewEl!.style.transform = `translate(${position.x}px, ${position.y}px)`;
+    }
+
+    #handleMove = (event: SortableEvent) => {
         if (event instanceof DragEvent && event.dataTransfer) {
             event.dataTransfer.dropEffect = 'move';
         }
         event.preventDefault();
         event.stopPropagation();
 
-        const target = event.target as HTMLElement;
-        // console.log('handleMove', target);
-        if (target?.matches(this.options.dragSelector)) {
-            const currentPosition = {
-                x: event.clientX,
-                y: event.clientY
+
+        const target = closest(event.target as HTMLElement, this.options.dragSelector);
+
+        const currentPosition = {
+            x: event.clientX,
+            y: event.clientY
+        }
+
+        const delta = {
+            x: currentPosition.x - this.#startMeta!.x,
+            y: currentPosition.y - this.#startMeta!.y
+        }
+
+        const startLeft = this.#previewEl!.getAttribute('start-left') || '';
+        const startTop = this.#previewEl!.getAttribute('start-top') || '';
+
+        this.#setPreviewPosition({
+            x: +startLeft + delta.x,
+            y: +startTop + delta.y,
+        });
+
+        this.#dragEl!.style.visibility = 'hidden';
+
+        if (target) {
+            if (this.#dragEl!.contains(target)) {
+                return;
             }
 
+
             const [_, vertical] = dragDirection(this.#lastPosition, currentPosition);
-            // console.log('vertical', vertical);
+
+            if (SupportDraggable) {
+                this.#fixScroll(target || this.#dragEl);
+            }
 
             const nextSibling = target.nextElementSibling;
             if (nextSibling) {
@@ -100,21 +164,78 @@ class Sortable {
         }
     }
 
-    #handleUp = (event: SortableEvent) => {
+    #fixScroll(target: HTMLElement) {
+        if (target) {
+            const boundary = beyondBoundary(target, this.container!);
+            if (boundary.top) {
+                this.container!.scrollBy({
+                    top: -target.clientHeight * SortablePreset.fixScrollRatio
+                });
+            }
+            if (boundary.bottom) {
+                this.container!.scrollBy({
+                    top: target.clientHeight * SortablePreset.fixScrollRatio
+                });
+            }
+
+            if (boundary.left) {
+                this.container!.scrollBy({
+                    left: -target.clientHeight * SortablePreset.fixScrollRatio
+                });
+            }
+
+            if (boundary.right) {
+                this.container!.scrollBy({
+                    left: target.clientHeight * SortablePreset.fixScrollRatio
+                });
+            }
+        }
+    }
+
+    #handleUp = () => {
         console.log('handleUp');
         this.#offEvents();
+
+        const currentDragRect = getRect(this.#dragEl!);
+        const startLeft = this.#previewEl!.getAttribute('start-left') || '';
+        const startTop = this.#previewEl!.getAttribute('start-top') || '';
+        if (+startLeft === currentDragRect.x && +startTop === currentDragRect.y) {
+            this.#clear();
+        } else {
+            this.#previewEl!.style.transition = SortablePreset.transition;
+            this.#setPreviewPosition({
+                x: currentDragRect.x,
+                y: currentDragRect.y,
+            });
+
+            const handleTransitionEnd = () => {
+                console.log('handleTransitionEnd run');
+                this.#previewEl!.removeEventListener('transitionend', handleTransitionEnd);
+                this.#clear();
+            }
+
+            this.#previewEl!.addEventListener('transitionend', handleTransitionEnd);
+        }
+    }
+
+    #clear() {
+        this.#previewEl?.remove();
+        this.#previewEl = null;
+        this.#dragEl!.style.visibility = 'visible';
+        this.#dragEl = null;
+        this.#lastPosition = null;
     }
 
     #offEvents() {
         this.container!.removeEventListener('dragenter', this.#handleMove);
         this.container!.removeEventListener('dragover', this.#handleMove);
         this.container!.removeEventListener('drop', this.#handleUp);
-        this.#dragEl.removeEventListener('dragend', this.#handleUp);
+        this.#dragEl!.removeEventListener('dragend', this.#handleUp);
 
-        // document.removeEventListener('pointermove', this.#handleMove);
-        // document.removeEventListener('pointerup', this.#handleUp);
-        // document.removeEventListener('mousemove', this.#handleMove);
-        // document.removeEventListener('mouseup', this.#handleUp);
+        document.removeEventListener('pointermove', this.#handleMove);
+        document.removeEventListener('pointerup', this.#handleUp);
+        document.removeEventListener('mousemove', this.#handleMove);
+        document.removeEventListener('mouseup', this.#handleUp);
     }
 
 
