@@ -5,6 +5,7 @@ interface SortableOptions {
     container: string | HTMLElement;
     dragSelector?: string;
     supportPointer?: boolean;
+    animation?: number;
 }
 
 interface PointMeta {

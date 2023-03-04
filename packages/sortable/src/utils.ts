@@ -49,10 +49,33 @@ function beyondBoundary(target: HTMLElement, container: HTMLElement): {
 }
 
 
+function index(el: HTMLElement, selector?: string) {
+    let index = 0;
+
+    if (!el || !el.parentNode) {
+        return -1;
+    }
+
+    let preEl = el.previousElementSibling as HTMLElement;
+
+    while (preEl) { // 获取el前面离他最近的兄弟元素
+        if (!selector || preEl.matches(selector)) {
+            // 兄弟符合条件就加一
+            index++;
+        }
+        preEl = preEl.previousElementSibling as HTMLElement;
+    }
+    // 最终返回el所在的索引
+    return index;
+}
+
+
+
 export {
     Direction,
     dragDirection,
     closest,
     getRect,
-    beyondBoundary
+    beyondBoundary,
+    index
 }

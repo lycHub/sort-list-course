@@ -1,5 +1,5 @@
 import type {PointMeta, SortableEvent, SortableOptions, TypeWithNull} from "./typings";
-import {beyondBoundary, closest, Direction, dragDirection, getRect} from "./utils";
+import {beyondBoundary, closest, Direction, dragDirection, getRect, index} from "./utils";
 
 const SortablePreset = {
     containerCls: 'sortable-container',
@@ -38,7 +38,8 @@ class Sortable {
     #mergeOptions(options: SortableOptions) {
         this.options = Object.assign({
             dragSelector: '>li',
-            supportPointer: false
+            supportPointer: false,
+            animation: 200
         }, options);
     }
 
@@ -68,15 +69,16 @@ class Sortable {
                 this.container!.addEventListener('dragover', this.#handleMove);
                 this.container!.addEventListener('drop', this.#handleUp);
                 target.addEventListener('dragend', this.#handleUp);
+            } else {
+                if (this.options.supportPointer) {
+                    document.addEventListener('pointermove', this.#handleMove);
+                    document.addEventListener('pointerup', this.#handleUp);
+                } else {
+                    document.addEventListener('mousemove', this.#handleMove);
+                    document.addEventListener('mouseup', this.#handleUp);
+                }
             }
 
-            if (this.options.supportPointer) {
-                document.addEventListener('pointermove', this.#handleMove);
-                document.addEventListener('pointerup', this.#handleUp);
-            } else {
-                document.addEventListener('mousemove', this.#handleMove);
-                document.addEventListener('mouseup', this.#handleUp);
-            }
             this.#dragEl = target;
         }
     }
@@ -166,6 +168,9 @@ class Sortable {
             x: event.clientX,
             y: event.clientY
         }
+
+        // const newIndex = index(this.#dragEl!, this.options.dragSelector);
+        // console.log('newIndex', newIndex);
     }
 
     #fixScroll(target: HTMLElement) {
